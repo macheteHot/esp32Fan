@@ -1,0 +1,25 @@
+@baseUrl = http://10.0.0.63:8080/api
+### ON
+GET {{baseUrl}}/on
+Content-Type: application/json
+
+
+### OFF
+GET {{baseUrl}}/off
+Content-Type: application/json
+
+
+### status 
+GET {{baseUrl}}/status
+Content-Type: application/json
+
+
+### timer
+GET {{baseUrl}}/timer_off?seconds=5
+Content-Type: application/json
+
+
+### canel timer
+GET {{baseUrl}}/cancel_timer
+Content-Type: application/json  
+
