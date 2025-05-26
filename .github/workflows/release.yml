@@ -35,11 +35,11 @@ jobs:
         run: npm install conventional-changelog conventional-changelog-angular
 
       - name: Generate Release Notes
-        run: npx conventional-changelog -p angular -r 1 > RELEASE_NOTES.md
+        run: npx conventional-changelog -p angular -r 1
 
       - name: Upload merged bin to Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: ./build/esp32Fan_merged.bin
-          body_path: RELEASE_NOTES.md
+          body_path: CHANGELOG.md
