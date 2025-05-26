@@ -18,6 +18,11 @@ jobs:
       - name: Install esptool
         run: pip install esptool
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: ESP-IDF build (espressif/esp-idf-ci-action)
         uses: espressif/esp-idf-ci-action@v1
         with:
@@ -26,13 +31,15 @@ jobs:
           path: .
           command: pwd && idf.py build && python3 merge_bin.py
 
+      - name: Install changelog dependencies
+        run: npm install conventional-changelog conventional-changelog-angular
+
       - name: Generate Release Notes
-        run: npx conventional-github-releaser -p angular
-        env:
-          CONVENTIONAL_GITHUB_RELEASER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx conventional-changelog -p angular -r 1 > RELEASE_NOTES.md
 
       - name: Upload merged bin to Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: ./build/esp32Fan_merged.bin
+          body_path: RELEASE_NOTES.md
