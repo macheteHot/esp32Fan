@@ -1,6 +1,14 @@
-@baseUrl = http://10.0.0.63:8080/api
-### ON
-GET {{baseUrl}}/on
+@baseUrl = http://10.0.0.91:8080/api
+### ON1
+GET {{baseUrl}}/on?level=1
+Content-Type: application/json
+
+### ON2
+GET {{baseUrl}}/on?level=2
+Content-Type: application/json
+
+### ON3
+GET {{baseUrl}}/on?level=3
 Content-Type: application/json
 
 

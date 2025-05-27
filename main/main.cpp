@@ -26,7 +26,7 @@ extern "C" {
 
 #define BUTTON_GPIO GPIO_NUM_0
 
-static hap_char_t *fan_on_char = NULL;
+static hap_char_t *fan_speed_char = NULL;
 
 static const char *TAG = "main";
 
@@ -38,11 +38,26 @@ static int fan_identify(hap_acc_t *ha) {
 // HomeKit Fan 服务写回调
 static int fan_serv_write(hap_write_data_t *write_data, int count, void *serv_priv,
                           void *write_priv) {
+  int speed = 100; // 默认高档
   for (int i = 0; i < count; i++) {
-    if (strcmp(hap_char_get_type_uuid(write_data[i].hc), HAP_CHAR_UUID_ON) == 0) {
-      change_fan_state(write_data[i].val.b);
+    if (strcmp(hap_char_get_type_uuid(write_data[i].hc), HAP_CHAR_UUID_ROTATION_SPEED) == 0) {
+      speed = write_data[i].val.f;
     }
   }
+  // 速度映射：1=low, 2=middle, 3=high
+  int level = 3;
+  if (speed == 0) {
+    change_fan_state(false);
+    return HAP_SUCCESS; // 关闭风扇
+  }
+  if (speed < 34) {
+    level = 1;
+  } else if (speed < 67) {
+    level = 2;
+  } else {
+    level = 3;
+  }
+  change_fan_state(true, level);
   return HAP_SUCCESS;
 }
 
@@ -64,7 +79,7 @@ void loop() {
       fan_state = current_fan_state;
       // 更新 HomeKit 状态
       hap_val_t fan_on_val = {.b = fan_state};
-      hap_char_update_val(fan_on_char, &fan_on_val);
+      hap_char_update_val(fan_speed_char, &fan_on_val);
       ESP_LOGI(TAG, "[HAP] Fan state changed: %s", fan_state ? "ON" : "OFF");
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -105,7 +120,10 @@ extern "C" void app_main() {
   hap_acc_t *acc = hap_acc_create(&cfg);
   hap_acc_add_product_data(acc, (uint8_t *)"ESP32FAN", 8);
   hap_serv_t *fan_serv = hap_serv_fan_create(false);
-  fan_on_char = hap_serv_get_char_by_uuid(fan_serv, HAP_CHAR_UUID_ON);
+  fan_speed_char = hap_serv_get_char_by_uuid(fan_serv, HAP_CHAR_UUID_ROTATION_SPEED);
+  // 注册风速特征
+  fan_speed_char = hap_char_rotation_speed_create(100.0f);
+  hap_serv_add_char(fan_serv, fan_speed_char);
   hap_acc_add_serv(acc, fan_serv);
   hap_add_accessory(acc);
   // 注册 HomeKit Fan 服务写回调

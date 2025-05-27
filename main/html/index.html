@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1976d2" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -20,6 +20,22 @@
 <body>
   <div class="container">
     <h1>风扇控制</h1>
+    <div class="fan-controls">
+      <div class="radio-group">
+        <label>
+          <input type="radio" name="fan-speed" value="3">
+          高速
+        </label>
+        <label>
+          <input type="radio" name="fan-speed" value="2">
+          中速
+        </label>
+        <label>
+          <input type="radio" name="fan-speed" value="1">
+          低速
+        </label>
+      </div>
+    </div>
     <div class="timer-btns">
       <div class="duration-picker"></div>
       <button id="set-timer-btn">设置倒计时</button>
@@ -50,8 +66,7 @@
       </g>
     </svg>
     <div class="timer-off"></div>
-  </div>
-  <script src="/js/index.js"></script>
+    <script src="/js/index.js"></script>
 </body>
 
 </html>

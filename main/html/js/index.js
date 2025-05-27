@@ -1,4 +1,5 @@
 let fanOn = false;
+let fanLevel = 1;
 
 dayjs.extend(window.dayjs_plugin_duration);
 
@@ -8,6 +9,15 @@ const fanBlades = document.querySelector(".fan-blades");
 const timerOff = document.querySelector(".timer-off");
 const setTimerBtn = document.getElementById("set-timer-btn");
 const durationPickerDom = document.querySelector(".duration-picker");
+const radioGroup = document.querySelector(".radio-group");
+const fanSpeedRadios = document.querySelectorAll('input[name="fan-speed"]');
+radioGroup.addEventListener("change", (event) => {
+  const target = event.target;
+  if (target.tagName === "INPUT" && target.type === "radio") {
+    const level = target.value;
+    fetch(`/api/on?level=${level}`);
+  }
+});
 
 const timePicker = new Picker(durationPickerDom, {
   format: "HH:mm",
@@ -39,6 +49,8 @@ const timePicker = new Picker(durationPickerDom, {
 
 function changeAnimation(isOn) {
   fanBlades.style.animationPlayState = isOn ? "running" : "paused";
+  const durations = { 1: "2s", 2: "1s", 3: "0.5s" };
+  fanBlades.style.animationDuration = durations[fanLevel] || "2s";
   fanSvgBtn.style.filter = isOn ? "none" : "grayscale(100%)";
 }
 
@@ -52,8 +64,14 @@ async function toggleFan() {
 async function updateStatus() {
   try {
     const response = await fetch("/api/status");
-    const { status, timer_left } = await response.json();
+    const { status, timer_left, last_fan_level } = await response.json();
     fanOn = status === 1;
+    fanLevel = last_fan_level || 1;
+    fanSpeedRadios.forEach((radio) => {
+      if (radio.value === last_fan_level.toString()) {
+        radio.checked = true && fanOn;
+      }
+    });
     changeAnimation(fanOn);
 
     // 显示关闭倒计时

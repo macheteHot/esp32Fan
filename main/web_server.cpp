@@ -25,8 +25,19 @@ static void set_cors_headers(httpd_req_t *req) {
 static const char *TAG = "web_server";
 // /api/on 处理函数
 static esp_err_t api_on_handler(httpd_req_t *req) {
+  char query[64] = {0};
+  int level = get_last_fan_level(); // 如果没有level参数，使用上次风速
+  // 获取 GET 参数 level
+  if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
+    char level_str[16] = {0};
+    if (httpd_query_key_value(query, "level", level_str, sizeof(level_str)) == ESP_OK) {
+      level = atoi(level_str);
+      if (level < 1 || level > 3)
+        level = get_last_fan_level();
+    }
+  }
   set_cors_headers(req);
-  change_fan_state(true);
+  change_fan_state(true, level);
   httpd_resp_sendstr(req, "{\"result\":true,\"status\":1}");
   return ESP_OK;
 }
@@ -82,12 +93,14 @@ static esp_err_t api_cancel_timer_handler(httpd_req_t *req) {
 // /api/status 处理函数
 static esp_err_t api_status_handler(httpd_req_t *req) {
   set_cors_headers(req);
+  int last_fan_level = get_last_fan_level();
   int isON = get_fan_isON();
   int timer_left = fan_timer_left();
   char resp[128];
-  int len = snprintf(resp, sizeof(resp), "{\"status\":%d,\"timer_left\":%d}", isON, timer_left);
-  ESP_LOGI(TAG, "/api/status called, status=%d, timer_left=%d, resp=%.*s", isON, timer_left, len,
-           resp);
+  int len = snprintf(resp, sizeof(resp), "{\"status\":%d,\"timer_left\":%d,\"last_fan_level\":%d}",
+                     isON, timer_left, last_fan_level);
+  ESP_LOGI(TAG, "/api/status called, status=%d, timer_left=%d, last_fan_level=%d, resp=%.*s", isON,
+           timer_left, last_fan_level, len, resp);
   httpd_resp_sendstr(req, resp);
   return ESP_OK;
 }
