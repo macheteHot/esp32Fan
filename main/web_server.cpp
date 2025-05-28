@@ -3,6 +3,7 @@
 #include "esp_log.h"
 #include "esp_spiffs.h"
 #include "fan_gpio.h"
+#include "homekit.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,18 +27,19 @@ static const char *TAG = "web_server";
 // /api/on 处理函数
 static esp_err_t api_on_handler(httpd_req_t *req) {
   char query[64] = {0};
-  int level = get_last_fan_level(); // 如果没有level参数，使用上次风速
+  int level = getFanLevel(); // 如果没有level参数，使用上次风速
   // 获取 GET 参数 level
   if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
     char level_str[16] = {0};
     if (httpd_query_key_value(query, "level", level_str, sizeof(level_str)) == ESP_OK) {
       level = atoi(level_str);
       if (level < 1 || level > 3)
-        level = get_last_fan_level();
+        level = 1; // 确保level在1-3之间
     }
   }
   set_cors_headers(req);
   change_fan_state(true, level);
+  homekit_fan_state_sync(true, level);
   httpd_resp_sendstr(req, "{\"result\":true,\"status\":1}");
   return ESP_OK;
 }
@@ -45,6 +47,7 @@ static esp_err_t api_on_handler(httpd_req_t *req) {
 static esp_err_t api_off_handler(httpd_req_t *req) {
   set_cors_headers(req);
   change_fan_state(false);
+  homekit_fan_state_sync(false, getFanLevel());
   httpd_resp_sendstr(req, "{\"result\":true,\"status\":0}");
   return ESP_OK;
 }
@@ -93,7 +96,7 @@ static esp_err_t api_cancel_timer_handler(httpd_req_t *req) {
 // /api/status 处理函数
 static esp_err_t api_status_handler(httpd_req_t *req) {
   set_cors_headers(req);
-  int last_fan_level = get_last_fan_level();
+  int last_fan_level = getFanLevel();
   int isON = get_fan_isON();
   int timer_left = fan_timer_left();
   char resp[128];
@@ -206,3 +209,12 @@ void start_http_server() {
     httpd_register_uri_handler(server, &static_file_uri);
   }
 }
+
+// 修正声明，确保链接到 main.cpp 的实现
+#ifdef __cplusplus
+extern "C" {
+#endif
+void homekit_fan_state_sync(bool on, int level);
+#ifdef __cplusplus
+}
+#endif

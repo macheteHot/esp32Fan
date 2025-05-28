@@ -35,10 +35,12 @@ h1 {
   margin-bottom: 1.5em;
 }
 
+.fan-svg {
+  transition: all 0.3s linear;
+}
+
 .fan-blades {
-  animation: spin 2s linear infinite;
   transform-origin: 514px 402px;
-  animation-play-state: paused;
 }
 
 @keyframes spin {
